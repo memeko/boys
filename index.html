@@ -1,0 +1,708 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Карточки-квиз — «Расшифровка мальчиков»</title>
+  <meta name="color-scheme" content="light dark" />
+  <style>
+    :root{
+      --bg: #0b1020;
+      --bg2:#0f1733;
+      --card:#121b38cc;
+      --card2:#101a36f2;
+      --text:#eef2ff;
+      --muted:#b7c2ff;
+      --accent:#ffd37a;   /* тёплая “бумажная” нота */
+      --accent2:#7ad7ff;  /* холодный “научный” акцент */
+      --good:#59d38c;
+      --bad:#ff6b7a;
+      --shadow: 0 18px 55px rgba(0,0,0,.45);
+      --radius: 22px;
+      --ring: 0 0 0 3px rgba(122,215,255,.25);
+      --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+      --sans: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, "Noto Sans", Arial, "Apple Color Emoji","Segoe UI Emoji";
+    }
+
+    @media (prefers-color-scheme: light){
+      :root{
+        --bg:#f5f7ff;
+        --bg2:#eef2ff;
+        --card:#ffffffcc;
+        --card2:#ffffff;
+        --text:#0c1633;
+        --muted:#4b5a86;
+        --shadow: 0 18px 55px rgba(6,20,60,.15);
+        --ring: 0 0 0 3px rgba(40,110,255,.18);
+      }
+    }
+
+    *{ box-sizing:border-box; }
+    body{
+      margin:0;
+      font-family:var(--sans);
+      color:var(--text);
+      background:
+        radial-gradient(1200px 700px at 10% 10%, rgba(122,215,255,.22), transparent 55%),
+        radial-gradient(900px 700px at 90% 20%, rgba(255,211,122,.20), transparent 60%),
+        radial-gradient(900px 700px at 50% 100%, rgba(179,122,255,.16), transparent 60%),
+        linear-gradient(180deg, var(--bg), var(--bg2));
+      min-height:100svh;
+      display:flex;
+      align-items:stretch;
+      justify-content:center;
+      padding:24px 14px;
+    }
+
+    .app{
+      width:min(980px, 100%);
+      display:flex;
+      flex-direction:column;
+      gap:14px;
+    }
+
+    header{
+      display:flex;
+      gap:12px;
+      align-items:center;
+      justify-content:space-between;
+      padding:14px 16px;
+      border-radius:var(--radius);
+      background:linear-gradient(135deg, rgba(255,211,122,.14), rgba(122,215,255,.12));
+      box-shadow:var(--shadow);
+      border:1px solid rgba(255,255,255,.12);
+      backdrop-filter: blur(10px);
+    }
+
+    .brand{
+      display:flex; flex-direction:column; gap:2px;
+      min-width:0;
+    }
+    .brand .kicker{
+      font-size:12px;
+      letter-spacing:.08em;
+      text-transform:uppercase;
+      color:var(--muted);
+      display:flex;
+      gap:8px;
+      align-items:center;
+      flex-wrap:wrap;
+    }
+    .badge{
+      font-family:var(--mono);
+      font-size:12px;
+      padding:2px 8px;
+      border-radius:999px;
+      border:1px solid rgba(255,255,255,.18);
+      background:rgba(255,255,255,.08);
+      color:var(--text);
+      white-space:nowrap;
+    }
+    .title{
+      font-size:18px;
+      font-weight:760;
+      line-height:1.2;
+      margin:0;
+      overflow:hidden;
+      text-overflow:ellipsis;
+      white-space:nowrap;
+    }
+    .sub{
+      margin:0;
+      font-size:13px;
+      color:var(--muted);
+      line-height:1.25;
+    }
+
+    .actions{
+      display:flex; gap:10px; align-items:center; flex-wrap:wrap;
+    }
+
+    .btn{
+      appearance:none;
+      border:1px solid rgba(255,255,255,.18);
+      background:rgba(255,255,255,.10);
+      color:var(--text);
+      padding:10px 12px;
+      border-radius:14px;
+      font-weight:650;
+      cursor:pointer;
+      transition:transform .06s ease, background .15s ease, border-color .15s ease;
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+      user-select:none;
+    }
+    .btn:hover{ background:rgba(255,255,255,.14); }
+    .btn:active{ transform:translateY(1px); }
+    .btn:focus-visible{ outline:none; box-shadow:var(--ring); }
+
+    .btn.primary{
+      background:linear-gradient(135deg, rgba(255,211,122,.28), rgba(122,215,255,.18));
+      border-color:rgba(255,211,122,.28);
+    }
+
+    main{
+      display:grid;
+      grid-template-columns: 1.25fr .75fr;
+      gap:14px;
+      align-items:stretch;
+    }
+
+    @media (max-width: 860px){
+      main{ grid-template-columns:1fr; }
+      .title{ white-space:normal; }
+    }
+
+    .card{
+      border-radius:var(--radius);
+      background:linear-gradient(180deg, var(--card), var(--card2));
+      box-shadow:var(--shadow);
+      border:1px solid rgba(255,255,255,.12);
+      padding:18px;
+      backdrop-filter: blur(10px);
+    }
+
+    .metaRow{
+      display:flex;
+      gap:12px;
+      align-items:center;
+      justify-content:space-between;
+      flex-wrap:wrap;
+      margin-bottom:12px;
+    }
+
+    .progress{
+      display:flex; flex-direction:column; gap:6px;
+      min-width:220px;
+    }
+    .progress .line{
+      height:10px;
+      border-radius:999px;
+      background:rgba(255,255,255,.10);
+      overflow:hidden;
+      border:1px solid rgba(255,255,255,.10);
+    }
+    .progress .bar{
+      height:100%;
+      width:0%;
+      border-radius:999px;
+      background:linear-gradient(90deg, rgba(122,215,255,.9), rgba(255,211,122,.9));
+      transition: width .35s ease;
+    }
+    .progress .txt{
+      font-family:var(--mono);
+      font-size:12px;
+      color:var(--muted);
+      display:flex;
+      justify-content:space-between;
+      gap:10px;
+    }
+
+    .scoreBox{
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+      align-items:center;
+      justify-content:flex-end;
+      font-family:var(--mono);
+      color:var(--muted);
+      font-size:12px;
+    }
+    .pill{
+      padding:6px 10px;
+      border-radius:999px;
+      border:1px solid rgba(255,255,255,.14);
+      background:rgba(255,255,255,.08);
+      color:var(--text);
+    }
+
+    .question{
+      font-size:18px;
+      line-height:1.35;
+      margin:0 0 12px 0;
+      font-weight:720;
+    }
+
+    .options{
+      display:grid;
+      grid-template-columns:1fr;
+      gap:10px;
+      margin-top:10px;
+    }
+    .opt{
+      text-align:left;
+      width:100%;
+      padding:12px 12px;
+      border-radius:16px;
+      border:1px solid rgba(255,255,255,.16);
+      background:rgba(255,255,255,.06);
+      color:var(--text);
+      cursor:pointer;
+      transition: transform .06s ease, background .15s ease, border-color .15s ease;
+      display:flex;
+      gap:10px;
+      align-items:flex-start;
+    }
+    .opt:hover{ background:rgba(255,255,255,.10); }
+    .opt:active{ transform:translateY(1px); }
+    .opt:focus-visible{ outline:none; box-shadow:var(--ring); }
+    .opt[disabled]{ opacity:.65; cursor:not-allowed; }
+
+    .opt .idx{
+      font-family:var(--mono);
+      font-weight:800;
+      opacity:.75;
+      min-width:22px;
+      margin-top:1px;
+    }
+    .opt.good{
+      border-color:rgba(89,211,140,.55);
+      background:rgba(89,211,140,.16);
+    }
+    .opt.bad{
+      border-color:rgba(255,107,122,.55);
+      background:rgba(255,107,122,.14);
+    }
+
+    .feedback{
+      margin-top:12px;
+      display:flex;
+      gap:10px;
+      align-items:flex-start;
+      padding:12px 12px;
+      border-radius:16px;
+      border:1px solid rgba(255,255,255,.12);
+      background:rgba(255,255,255,.06);
+    }
+    .feedback .dot{
+      width:10px; height:10px;
+      border-radius:50%;
+      margin-top:4px;
+      flex:0 0 auto;
+      background:var(--accent2);
+    }
+    .feedback.good .dot{ background:var(--good); }
+    .feedback.bad .dot{ background:var(--bad); }
+    .feedback p{
+      margin:0;
+      color:var(--muted);
+      line-height:1.35;
+      font-size:13px;
+    }
+
+    .side .h{
+      margin:0 0 10px 0;
+      font-size:14px;
+      letter-spacing:.02em;
+      text-transform:uppercase;
+      color:var(--muted);
+    }
+
+    .side a{
+      color:var(--text);
+      text-decoration:none;
+      border-bottom:1px dashed rgba(255,255,255,.35);
+    }
+    .side a:hover{ border-bottom-color:transparent; }
+
+    .small{
+      font-size:13px;
+      color:var(--muted);
+      line-height:1.45;
+      margin:0;
+    }
+
+    .kbd{
+      font-family:var(--mono);
+      font-size:12px;
+      padding:2px 6px;
+      border-radius:8px;
+      border:1px solid rgba(255,255,255,.18);
+      background:rgba(255,255,255,.08);
+      color:var(--text);
+    }
+
+    .error{
+      border-color: rgba(255,107,122,.45);
+      background: rgba(255,107,122,.10);
+      padding:12px;
+      border-radius:16px;
+      color:var(--text);
+      font-size:13px;
+      line-height:1.45;
+    }
+
+    footer{
+      margin-top:4px;
+      text-align:center;
+      color:var(--muted);
+      font-size:12px;
+      line-height:1.35;
+    }
+  </style>
+</head>
+<body>
+  <div class="app" role="application" aria-label="Игра с карточками-вопросами">
+    <header>
+      <div class="brand">
+        <div class="kicker">
+          <span class="badge">карточки-квиз</span>
+          <span class="badge">по книге</span>
+        </div>
+        <h1 class="title">«Расшифровка мальчиков. Тонкое искусство воспитания сыновей»</h1>
+        <p class="sub">Источник карточек: ваш CSV-файл + ссылка на страницу издательства в боковой панели.</p>
+      </div>
+      <div class="actions">
+        <button class="btn" id="btnShuffle" title="Перемешать порядок вопросов">🔀 Перемешать</button>
+        <button class="btn primary" id="btnRestart" title="Начать заново">↻ Заново</button>
+      </div>
+    </header>
+
+    <main>
+      <section class="card" aria-live="polite">
+        <div class="metaRow">
+          <div class="progress" aria-label="Прогресс">
+            <div class="line" aria-hidden="true"><div class="bar" id="bar"></div></div>
+            <div class="txt">
+              <span id="posTxt">—</span>
+              <span id="deckTxt">—</span>
+            </div>
+          </div>
+          <div class="scoreBox" aria-label="Счёт">
+            <span class="pill" id="scorePill">Очки: 0</span>
+            <span class="pill" id="streakPill">Серия: 0</span>
+          </div>
+        </div>
+
+        <p class="question" id="q">Загрузка вопросов…</p>
+        <div class="options" id="opts" role="list"></div>
+
+        <div id="fb" class="feedback" style="display:none;">
+          <div class="dot" aria-hidden="true"></div>
+          <p id="fbText"></p>
+        </div>
+
+        <div id="err" class="error" style="display:none;"></div>
+
+        <div class="metaRow" style="margin-top:14px;">
+          <span class="small">
+            Управление с клавиатуры: <span class="kbd">1</span>–<span class="kbd">4</span> выбрать вариант,
+            <span class="kbd">Enter</span> дальше.
+          </span>
+          <button class="btn" id="btnNext" disabled title="Следующий вопрос">→ Дальше</button>
+        </div>
+      </section>
+
+      <aside class="card side">
+        <p class="h">Справка</p>
+        <p class="small" style="margin-bottom:10px;">
+          Эта мини-игра показывает карточки с вопросами и вариантами ответов (один верный).
+          Визуальная “рамка” привязана к книге и не маскируется под официальное приложение — просто аккуратная отсылка.
+        </p>
+
+        <p class="small" style="margin:0 0 10px 0;">
+          Страница книги на сайте издательства:
+          <br />
+          <a href="https://pilotlz.ru/books/309/11037/" target="_blank" rel="noopener noreferrer">
+            pilotlz.ru/books/309/11037/
+          </a>
+        </p>
+
+        <p class="h" style="margin-top:14px;">Техчасть</p>
+        <p class="small" style="margin-bottom:10px;">
+          Файл <span class="kbd">flashcards.csv</span> должен лежать рядом с <span class="kbd">index.html</span>.
+          CSV ожидается как две колонки: <b>вопрос</b> и <b>верный ответ</b>.
+        </p>
+
+        <p class="small" style="margin:0;">
+          Если CSV не загрузится (например, неверное имя файла), игра включит встроенный демо-набор.
+        </p>
+      </aside>
+    </main>
+
+    <footer>
+      Карточки сформированы из данных пользователя. Отсылка к книге — информационная: «Расшифровка мальчиков. Тонкое искусство воспитания сыновей».
+    </footer>
+  </div>
+
+  <!-- CSV parser (tiny and reliable) -->
+  <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
+
+  <script>
+    // --- Config ---
+    const CSV_FILE = "flashcards.csv";
+    const CHOICES = 4;
+
+    // --- State ---
+    let deck = [];
+    let order = [];
+    let idx = 0;
+    let locked = false;
+    let answered = false;
+
+    let score = 0;
+    let streak = 0;
+
+    // --- Elements ---
+    const elQ = document.getElementById("q");
+    const elOpts = document.getElementById("opts");
+    const elFb = document.getElementById("fb");
+    const elFbText = document.getElementById("fbText");
+    const elErr = document.getElementById("err");
+    const elNext = document.getElementById("btnNext");
+    const elShuffle = document.getElementById("btnShuffle");
+    const elRestart = document.getElementById("btnRestart");
+    const elBar = document.getElementById("bar");
+    const elPos = document.getElementById("posTxt");
+    const elDeckTxt = document.getElementById("deckTxt");
+    const elScore = document.getElementById("scorePill");
+    const elStreak = document.getElementById("streakPill");
+
+    // --- Demo fallback (если CSV не загрузился) ---
+    const demo = [
+      { q: "Пример вопроса: что важнее всего в разговоре с подростком?", a: "Регулярность и уважение к его переживаниям." },
+      { q: "Пример вопроса: что помогает мальчикам учиться просить помощь?", a: "Безопасная среда без стыда и ярлыков." },
+      { q: "Пример вопроса: почему важно обсуждать чувства, а не только поступки?", a: "Потому что чувства управляют решениями сильнее, чем кажется." },
+      { q: "Пример вопроса: что делать вместо морализации?", a: "Слушать, уточнять, задавать вопросы и договариваться." }
+    ];
+
+    // --- Utilities ---
+    function shuffle(arr){
+      const a = arr.slice();
+      for (let i = a.length - 1; i > 0; i--){
+        const j = Math.floor(Math.random() * (i + 1));
+        [a[i], a[j]] = [a[j], a[i]];
+      }
+      return a;
+    }
+
+    function clamp(n,min,max){ return Math.max(min, Math.min(max,n)); }
+
+    function setError(msg){
+      if (!msg){
+        elErr.style.display = "none";
+        elErr.textContent = "";
+        return;
+      }
+      elErr.style.display = "block";
+      elErr.textContent = msg;
+    }
+
+    function setFeedback(kind, msg){
+      elFb.style.display = "flex";
+      elFb.classList.remove("good","bad");
+      if (kind) elFb.classList.add(kind);
+      elFbText.textContent = msg;
+    }
+
+    function clearFeedback(){
+      elFb.style.display = "none";
+      elFb.classList.remove("good","bad");
+      elFbText.textContent = "";
+    }
+
+    function normalizeRow(row){
+      // row may be array or object; we want 2 fields
+      let q = "", a = "";
+      if (Array.isArray(row)){
+        q = String(row[0] ?? "").trim();
+        a = String(row[1] ?? "").trim();
+      } else if (row && typeof row === "object"){
+        const keys = Object.keys(row);
+        q = String(row[keys[0]] ?? "").trim();
+        a = String(row[keys[1]] ?? "").trim();
+      }
+      return { q, a };
+    }
+
+    function buildOrder(){
+      order = shuffle([...Array(deck.length).keys()]);
+      idx = 0;
+      answered = false;
+      locked = false;
+      clearFeedback();
+      elNext.disabled = true;
+      render();
+    }
+
+    function pickChoices(correctAnswer){
+      const allAnswers = deck.map(x => x.a).filter(Boolean);
+      const pool = allAnswers.filter(a => a !== correctAnswer);
+      const picks = shuffle(pool).slice(0, Math.max(0, CHOICES - 1));
+      const choices = shuffle([correctAnswer, ...picks]).slice(0, CHOICES);
+      // if not enough unique answers, pad with correct (rare edge-case)
+      while (choices.length < CHOICES) choices.push(correctAnswer);
+      return choices;
+    }
+
+    function updateHUD(){
+      const total = order.length || 1;
+      const pos = clamp(idx + 1, 1, total);
+      elPos.textContent = `Вопрос ${pos} из ${total}`;
+      elDeckTxt.textContent = `${deck.length} карточек в наборе`;
+      elScore.textContent = `Очки: ${score}`;
+      elStreak.textContent = `Серия: ${streak}`;
+      elBar.style.width = `${Math.round((pos / total) * 100)}%`;
+    }
+
+    function render(){
+      setError("");
+      updateHUD();
+
+      if (!deck.length){
+        elQ.textContent = "Нет данных для игры.";
+        elOpts.innerHTML = "";
+        return;
+      }
+
+      const card = deck[order[idx]];
+      elQ.textContent = card.q;
+
+      elOpts.innerHTML = "";
+      clearFeedback();
+      elNext.disabled = true;
+      answered = false;
+      locked = false;
+
+      const choices = pickChoices(card.a);
+      choices.forEach((text, i) => {
+        const btn = document.createElement("button");
+        btn.className = "opt";
+        btn.type = "button";
+        btn.setAttribute("role", "listitem");
+        btn.dataset.index = String(i);
+        btn.dataset.value = text;
+
+        const idxSpan = document.createElement("span");
+        idxSpan.className = "idx";
+        idxSpan.textContent = `${i+1}.`;
+
+        const tSpan = document.createElement("span");
+        tSpan.textContent = text;
+
+        btn.appendChild(idxSpan);
+        btn.appendChild(tSpan);
+
+        btn.addEventListener("click", () => choose(btn));
+        elOpts.appendChild(btn);
+      });
+    }
+
+    function choose(btn){
+      if (locked || answered) return;
+      locked = true;
+
+      const selected = btn.dataset.value;
+      const card = deck[order[idx]];
+      const correct = card.a;
+
+      const optionButtons = [...elOpts.querySelectorAll(".opt")];
+      optionButtons.forEach(b => b.disabled = true);
+
+      // Mark correct & incorrect
+      optionButtons.forEach(b => {
+        if (b.dataset.value === correct) b.classList.add("good");
+      });
+      if (selected !== correct) btn.classList.add("bad");
+
+      answered = true;
+      elNext.disabled = false;
+
+      if (selected === correct){
+        score += 1;
+        streak += 1;
+        setFeedback("good", "Верно. Не магия, а аккуратная внимательность к смыслу.");
+      } else {
+        streak = 0;
+        setFeedback("bad", `Неверно. Верный ответ: «${correct}».`);
+      }
+
+      updateHUD();
+      locked = false;
+    }
+
+    function next(){
+      if (!answered) return;
+      if (idx < order.length - 1){
+        idx += 1;
+        render();
+      } else {
+        // финальный экран
+        elQ.textContent = "Финиш! 🎯";
+        elOpts.innerHTML = "";
+        elNext.disabled = true;
+
+        const total = order.length;
+        const pct = Math.round((score / total) * 100);
+
+        setFeedback(null, `Результат: ${score}/${total} (${pct}%). Нажмите «Заново», чтобы сыграть ещё раз.`);
+      }
+      updateHUD();
+    }
+
+    // --- Load CSV ---
+    async function loadCSV(){
+      try{
+        const resp = await fetch(CSV_FILE, { cache: "no-store" });
+        if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+        const text = await resp.text();
+
+        const parsed = Papa.parse(text, {
+          skipEmptyLines: true
+        });
+
+        if (!parsed.data || parsed.data.length < 2){
+          throw new Error("CSV выглядит пустым или слишком коротким.");
+        }
+
+        // Support cases where first row is mistakenly treated as header in some exports.
+        // We treat every row as [question, answer] if it has >=2 columns.
+        const rows = parsed.data
+          .map(r => normalizeRow(r))
+          .filter(r => r.q && r.a);
+
+        if (rows.length < 2){
+          throw new Error("Не удалось извлечь пары «вопрос–ответ» из CSV.");
+        }
+
+        deck = rows;
+      } catch (e){
+        deck = demo;
+        setError(
+          `Не удалось загрузить «${CSV_FILE}». Включён демо-набор.\n` +
+          `Причина: ${String(e.message || e)}\n\n` +
+          `Проверьте: файл рядом с index.html и запуск через локальный сервер (а не file://).`
+        );
+      } finally {
+        buildOrder();
+      }
+    }
+
+    // --- Events ---
+    elNext.addEventListener("click", next);
+    elRestart.addEventListener("click", () => {
+      score = 0; streak = 0;
+      buildOrder();
+    });
+    elShuffle.addEventListener("click", () => {
+      buildOrder();
+    });
+
+    // Keyboard: 1-4 choose, Enter next
+    window.addEventListener("keydown", (ev) => {
+      const k = ev.key;
+      if (k >= "1" && k <= "4"){
+        const i = Number(k) - 1;
+        const btn = elOpts.querySelector(`.opt[data-index="${i}"]`);
+        if (btn && !btn.disabled) btn.click();
+      }
+      if (k === "Enter"){
+        if (!elNext.disabled) next();
+      }
+    });
+
+    loadCSV();
+  </script>
+</body>
+</html>
